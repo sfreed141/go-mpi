@@ -47,6 +47,28 @@ func Init(argv *[]string) int {
 	return int(err)
 }
 
+//Init_thread
+//Initializes the MPI execution environment
+func Init_thread(argv *[]string, required int) (provided int, e int) {
+
+	argc := len(*argv)
+	c_argc := C.int(argc)
+
+	c_argv := make([]*C.char, argc)
+	for index, value := range *argv {
+		c_argv[index] = C.CString(value)
+		defer C.free(unsafe.Pointer(c_argv[index]))
+	}
+
+	err := C.MPI_Init_thread(&c_argc, (***C.char)(unsafe.Pointer(&c_argv)), C.int(required), (*C.int)(unsafe.Pointer(&provided)))
+	goargs := make([]string, c_argc)
+	for i := 0; i < int(c_argc); i++ {
+		goargs[i] = C.GoString(c_argv[i])
+	}
+	*argv = goargs
+	return provided, int(err)
+}
+
 //Initialized
 //Indicates whether MPI_Init has been called.
 func Initialized(flag *int) int {
